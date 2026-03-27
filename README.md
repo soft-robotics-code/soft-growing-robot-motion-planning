@@ -1,15 +1,21 @@
-# Sim & Real Co-Training Motion Planning for Soft Growing Robots
+# Trajectory Optimization and Morphology Control for Soft Growing Robots via Sim & Real Co-training
 
 Official implementation of:  
-**"Motion Planning for Soft Growing Robots via Sim & Real Co-Training with Imitation Learning and Offline Reinforcement Learning"**
+**"Trajectory Optimization and Morphology Control for Soft Growing Robots via Sim & Real Co-training"**
+
+🔗 Repository: https://github.com/soft-robotics-code/soft-growing-robot-motion-planning
 
 ---
 
 ## Repository Structure
 
 ```
-soft-growing-robot-planning/
+soft-growing-robot-motion-planning/
 ├── configs.py                               ← All hyperparameters (both networks)
+├── data/
+│   ├── README.md                            ← Dataset format documentation
+│   ├── real_trajectories_env1.mat           ← Real trajectories, Env 1 (Network I)
+│   └── offline_rl_dataset_real.json         ← Real RL dataset, partial (Network II)
 │
 ├── network_i/                               ← Network I: Trajectory Optimisation
 │   ├── model.py                             ← GAT–Transformer–MLP architecture
@@ -35,7 +41,7 @@ soft-growing-robot-planning/
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/soft-growing-robot-motion-planning.git
+git clone https://github.com/soft-robotics-code/soft-growing-robot-motion-planning.git
 cd soft-growing-robot-motion-planning
 pip install torch torch-geometric numpy scipy matplotlib
 ```
@@ -62,68 +68,65 @@ pip install torch torch-geometric numpy scipy matplotlib
 
 ---
 
-## Dataset Collection
+## Dataset
 
-### Network I — Virtual trajectory data
+### Provided datasets
 
-**Step 1.** In Unity, attach `SoftRobotDataCollector.cs` to a GameObject and press Play.  
-**Step 2.** Run the Python client:
+Partial real-world datasets are provided in `data/` to facilitate
+reproducibility:
+
+| File | Network | Description |
+|------|---------|-------------|
+| `data/real_trajectories_env1.mat` | Network I | Real tip trajectories, Env 1 |
+| `data/offline_rl_dataset_real.json` | Network II | Real offline RL trajectories (partial) |
+
+See `data/README.md` for full format specifications.
+
+### Virtual trajectories (simulated)
+
+Virtual datasets are generated using the provided Unity simulation scripts.
+All collection code is in `dataset_collection/`.
+
+**Network I:**
+1. Attach `SoftRobotDataCollector.cs` in Unity and press Play.
+2. Run:
 ```bash
 python dataset_collection/collect_traj_data.py
 ```
+Output: `coordinates_new.json`
 
-Output: `coordinates_new.json`  
-Format:
-```json
-[{"coordinates": [[x, z, action], ...]}, ...]
-```
-
-### Network II — Offline RL data (dual-scene comparison)
-
-The RL dataset is collected using a dual-scene Unity setup:
-- **Original scene**: clean growth trajectory (no rotation applied)
-- **Comparison scene**: same growth + Gaussian noise + sparse tendon rotation actions
-
-**Step 1.** Attach `SoftRobotRLDataCollector.cs` to a GameObject and press Play.  
-**Step 2.** Run the Python client:
+**Network II:**
+1. Attach `SoftRobotRLDataCollector.cs` in Unity and press Play.
+2. Run:
 ```bash
 python dataset_collection/collect_rl_data.py
 ```
+Output: `coordinates_new.json`, `coordinates_new_comparison.json`
 
-Output: `coordinates_new.json` and `coordinates_new_comparison.json`  
-Format:
-```json
-[{
-  "growth_coordinates":   [[x, z, action], ...],
-  "rotation_coordinates": [[x, z, action], ...]
-}, ...]
-```
+Convert raw outputs to the training format and place them at
+`data/offline_rl_dataset_sim.json`. See `data/README.md` for the required schema.
 
-The resulting files need to be converted to the RL training format
-(`offline_rl_dataset_sim.json` / `offline_rl_dataset_real.json`) using a
-preprocessing script. Each entry should follow the schema:
-```json
-{"states": [[l, ex, ez, θ, gx, gz], ...], "actions": [...], "rotation_end_point": [x, z]}
-```
+### Collecting additional real trajectories
 
-### Real trajectories
+The provided real datasets cover one physical environment. To collect data
+in additional environments, the following procedure is used.
 
-Real tip trajectories are captured using an IMU + encoder Kalman filter on
-the physical prototype. We do **not** release the physical dataset.
+**Hardware:** The robot tip is equipped with a 9-axis IMU and the base module
+with an encoder; a Kalman filter fuses both signals to estimate real-time tip
+pose.
 
-Expected `.mat` format:
-```
-real_trajectories.mat
-  <traj_name>  →  float64 (N, 2)   # [x, z] tip positions (metres)
-  ...
-```
-Update `REAL_TRAJ_NAMES` in `configs.py` to match your variable names.
+**Vision-based ground-truth capture:**
+1. Attach a coloured marker to the robot tip.
+2. Record a top-down video during each growth episode using an overhead RGB camera.
+3. Apply HSV colour thresholding to segment the tip marker per frame.
+4. Convert pixel coordinates to world coordinates via a pre-calibrated
+   homography matrix (checkerboard calibration).
+5. Save the `[x, z]` position sequence as a `.mat` file and update
+   `REAL_MAT_FILE` and `REAL_TRAJ_NAMES` in `configs.py`.
 
 ---
 
 ## Training
-
-Update `configs.py` with your file paths, then:
 
 ```bash
 # Network I — trajectory optimisation
@@ -133,7 +136,7 @@ python -m network_i.train
 python -m network_ii.train
 ```
 
-Key hyperparameters (see `configs.py` for full list):
+Key hyperparameters (see `configs.py` for the full list):
 
 | Parameter | Default | Note |
 |-----------|---------|------|
@@ -160,7 +163,8 @@ applies backtracking removal and uniform resampling, and saves results to
 
 ```bibtex
 @article{yourpaper2025,
-  title   = {Motion Planning for Soft Growing Robots via Sim \& Real Co-Training},
+  title   = {Trajectory Optimization and Morphology Control for Soft Growing Robots
+             via Sim \& Real Co-training},
   author  = {Your Authors},
   journal = {IEEE Transactions on Robotics},
   year    = {2025}

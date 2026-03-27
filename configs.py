@@ -1,6 +1,9 @@
 """
 configs.py  —  All hyperparameters for the Sim & Real Co-Training pipeline.
 
+Paper: "Trajectory Optimization and Morphology Control for Soft Growing Robots
+        via Sim & Real Co-training"
+
 Network I : GAT–Transformer–MLP trajectory optimisation (imitation learning)
 Network II: CQL offline RL morphology control and error correction
 """
@@ -18,10 +21,14 @@ Z_MIN, Z_MAX = -1.0, 6.0
 #  Network I  —  Trajectory Optimisation
 # ════════════════════════════════════════════════════════════════════════════
 
-# ── Data files (update paths to match your environment) ──────────────────────
-REAL_MAT_FILE     = "data/real_trajectories.mat"
-VIRTUAL_JSON_FILE = "data/virtual_trajectories.json"
-REAL_TRAJ_NAMES   = ["traji_7161", "traji_7164", "traji_7166"]
+# ── Data files ───────────────────────────────────────────────────────────────
+#   real_trajectories_env1.mat is provided in data/.
+#   Update REAL_TRAJ_NAMES to match the variable names in your .mat file.
+REAL_MAT_FILE     = "data/real_trajectories_env1.mat"
+VIRTUAL_JSON_FILE = "data/virtual_trajectories.json"   # generate via collect_traj_data.py
+
+#   Variable names of real trajectories inside the .mat file.
+REAL_TRAJ_NAMES = ["traji_7161", "traji_7164", "traji_7166"]
 
 # ── Sim / real ratio ─────────────────────────────────────────────────────────
 #   Best training loss achieved at ~4 % real data (see paper Fig. 9b).
@@ -70,13 +77,13 @@ VIRTUAL_DOMAIN_WEIGHT = 0.6
 SOFT_ROBOT_PENETRATION_TOLERANCE = 0.05
 
 # ── Training ─────────────────────────────────────────────────────────────────
-NET1_EPOCHS      = 400
-NET1_LR          = 5e-4
+NET1_EPOCHS       = 400
+NET1_LR           = 5e-4
 NET1_WEIGHT_DECAY = 1e-4
-NET1_GRAD_CLIP   = 0.5
-NET1_LR_MIN      = 1e-6
+NET1_GRAD_CLIP    = 0.5
+NET1_LR_MIN       = 1e-6
 NET1_PLOT_INTERVAL = 10
-NET1_CHECKPOINT  = "checkpoints/network_i.pt"
+NET1_CHECKPOINT   = "checkpoints/network_i.pt"
 
 # ── Inference / post-processing ──────────────────────────────────────────────
 INFER_TIMESTEPS     = 50
@@ -88,6 +95,8 @@ BACKTRACK_ANGLE_THR = 120.0
 # ════════════════════════════════════════════════════════════════════════════
 
 # ── Data files ───────────────────────────────────────────────────────────────
+#   offline_rl_dataset_real.json is provided in data/.
+#   Generate offline_rl_dataset_sim.json via collect_rl_data.py + Unity.
 RL_SIM_JSON  = "data/offline_rl_dataset_sim.json"
 RL_REAL_JSON = "data/offline_rl_dataset_real.json"
 
@@ -106,7 +115,7 @@ RL_SIM_RATIO = 0.85
 RL_LR         = 2e-5
 RL_GAMMA      = 0.99
 RL_TAU        = 0.001
-RL_ALPHA      = 0.015     # CQL conservatism coefficient
+RL_ALPHA      = 0.015
 RL_CQL_TEMP   = 0.5
 RL_BATCH_SIZE = 128
 
@@ -122,12 +131,12 @@ RL_STABLE_EPOCHS  = 200
 RL_LR_MIN_RATIO   = 0.05
 
 # ── Action thresholds ────────────────────────────────────────────────────────
-RL_ZERO_ACTION_THR    = 1.0   # |action| < thr → treated as zero
-RL_NONZERO_ACTION_THR = 1.5   # |action| ≥ thr → treated as non-zero
+RL_ZERO_ACTION_THR    = 1.0
+RL_NONZERO_ACTION_THR = 1.5
 
 # ── Distance thresholds ──────────────────────────────────────────────────────
-RL_NEAR_DIST = 0.10    # metres — "near" regime boundary
-RL_FAR_DIST  = 0.25    # metres — "far"  regime boundary
+RL_NEAR_DIST = 0.10
+RL_FAR_DIST  = 0.25
 
 # ── Error-correction trigger ─────────────────────────────────────────────────
-RL_CORRECTION_THRESHOLD = 0.02   # metres — activate tendon if |Δ| > this
+RL_CORRECTION_THRESHOLD = 0.02

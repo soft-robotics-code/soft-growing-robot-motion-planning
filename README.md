@@ -166,7 +166,7 @@ applies backtracking removal and uniform resampling, and saves results to
   title   = {Trajectory Optimization and Morphology Control for Soft Growing Robots
              via Sim \& Real Co-training},
   author  = {Your Authors},
-  journal = {IEEE Transactions on Robotics},
+  journal = {IEEE Transactions on Automation Science and Engineering},
   year    = {2025}
 }
 ```
